@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./ChatBotApp.css";
 import OpenAI from "openai";
-import { chatGPT_API_KEY } from "../helper/helper";
 
 const ChatBotApp = ({
   onGoBack,
