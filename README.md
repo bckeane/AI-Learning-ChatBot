@@ -1,8 +1,6 @@
-# React + Vite
+# Chat Bot app
+Followed instructions in [this course](https://www.udemy.com/course/react-js-build-6-real-world-react-apps-from-scratch/)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Created app with Vite 
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Use react and chatGPT api to create a simple chat bot
