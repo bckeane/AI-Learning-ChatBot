@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./ChatBotApp.css";
 import OpenAI from "openai";
+import Picker from "@emoji-mart/react"
+import data from "@emoji-mart/data"
 
 const ChatBotApp = ({
   onGoBack,
@@ -13,6 +15,8 @@ const ChatBotApp = ({
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState(chats[0]?.messages || []);
   const [isTyping, setIsTyping] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showChatList, setShowChatList] = useState(false)
   const chatEndRef = useRef(null);
 
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
@@ -27,6 +31,18 @@ const ChatBotApp = ({
     const activeChatObj = chats.find((chat) => chat.id === activeChat);
     setMessages(activeChatObj ? activeChatObj.messages : []);
   }, [activeChat, chats]);
+
+  useEffect(() => {
+    if (activeChat) {
+      const storedMessages = JSON.parse(localStorage.getItem(activeChat)) || [];
+      setMessages(storedMessages);
+    }
+  }, [activeChat])
+  
+
+  const handleEmojiSelect = (emoji) => {
+    setInputValue((prevInput) => prevInput + emoji.native)
+  }
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
@@ -49,6 +65,7 @@ const ChatBotApp = ({
     } else {
       const updatedMessages = [...messages, newMessage];
       setMessages(updatedMessages);
+      localStorage.setItem(activeChat, JSON.stringify(updatedMessages))
       setInputValue("");
 
       const updatedChats = chats.map((chat) => {
@@ -58,6 +75,7 @@ const ChatBotApp = ({
         return chat;
       });
       setChats(updatedChats);
+      localStorage.setItem('chats', JSON.stringify(updatedChats))
       setIsTyping(true)
 
       const response = await openai.chat.completions.create({
@@ -78,6 +96,7 @@ const ChatBotApp = ({
 
       const updatedMessagesWithResponses = [ ...updatedMessages, newResponse ];
       setMessages(updatedMessagesWithResponses);
+      localStorage.setItem(activeChat,JSON.stringify(updatedMessagesWithResponses))
       setIsTyping(false);
 
       const updatedChatsWithResponse = chats.map((chat) => {
@@ -87,6 +106,8 @@ const ChatBotApp = ({
         return chat;
       });
       setChats(updatedChatsWithResponse);
+      localStorage.setItem("chats", JSON.stringify(updatedChatsWithResponse))
+      
     }
   };
 
@@ -105,6 +126,8 @@ const ChatBotApp = ({
   const handleDeleteChat = (id) => {
     const updatedChats = chats.filter((chat) => chat.id != id);
     setChats(updatedChats);
+    localStorage.setItem('chats', JSON.stringify(updatedChats))
+    localStorage.removeItem(id)
     if (id === activeChat) {
       const newActiveChat = updatedChats.length > 0 ? updatedChats[0].id : null;
       setActiveChat(newActiveChat);
@@ -118,13 +141,12 @@ const ChatBotApp = ({
 
   return (
     <div className="chat-app">
-      <div className="chat-list">
+      <div className={`chat-list ${showChatList ? 'show' : ''}`}>
         <div className="chat-list-header">
           <h2> Chat List</h2>
 
-          <i
-            className="bx bx-edit-alt new-chat"
-            onClick={() => onNewChat()}></i>
+          <i className="bx bx-edit-alt new-chat"  onClick={() => onNewChat()}></i>
+          <i className="bx bx-x-circle close-list" onClick={() => setShowChatList(false)}></i>
         </div>
 
         {chats.map((chat) => (
@@ -147,7 +169,10 @@ const ChatBotApp = ({
       <div className="chat-window">
         <div className="chat-title">
           <h3>Chat with AI</h3>
+          <i className="bx bx-menu" onClick={() => setShowChatList(true)} />
+   
           <i className="bx bx-arrow-back arrow" onClick={onGoBack}></i>
+         
         </div>
 
         <div className="chat">
@@ -159,11 +184,16 @@ const ChatBotApp = ({
             </div>
           ))}
 
-        {isTyping && <div className="typing">Typing...<i class="fa-regular fa-clock"></i> </div>}
+        {isTyping && <div className="typing"><i class="fa-regular fa-clock">Thinking...</i> </div>}
             <div ref={chatEndRef}></div>
         </div>
         <form className="msg-form" onSubmit={(e) => e.preventDefault()}>
-          <i className="fa-solid fa-face-smile emoji"></i>
+          <i className="fa-solid fa-face-smile emoji" onClick={() => setShowEmojiPicker((prev) => !prev)}></i>
+          {showEmojiPicker && (
+            <div className="picker">
+                <Picker data={data} onEmojiSelect={handleEmojiSelect} />
+            </div>
+          )}
           <input
             type="text"
             className="msg-input"
@@ -171,6 +201,7 @@ const ChatBotApp = ({
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            onFocus={() => setShowEmojiPicker(false)}
           />
           <i className="fa-solid fa-paper-plane" onClick={sendMessage}></i>
         </form>
